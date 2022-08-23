@@ -19,6 +19,7 @@ test_dependencies = ["Shift Type"]
 class TestMonthlyAttendanceSheet(FrappeTestCase):
 	def setUp(self):
 		self.employee = make_employee("test_employee@example.com", company="_Test Company")
+		self.employee = make_employee("test@example.com", company="_Test Company")
 		frappe.db.delete("Attendance")
 
 		date = getdate()
@@ -235,6 +236,7 @@ class TestMonthlyAttendanceSheet(FrappeTestCase):
 def get_leave_application(employee):
 	now = now_datetime()
 	previous_month = now.month - 1
+	create_leave_type()
 
 	date = getdate()
 	year_start = getdate(get_year_start(date))
@@ -249,3 +251,24 @@ def get_leave_application(employee):
 def execute_report_with_invalid_filters():
 	filters = frappe._dict({"company": "_Test Company", "group_by": "Department"})
 	execute(filters=filters)
+
+
+def create_leave_type():
+    if not frappe.db.exists("Leave Type", "_Test Leave Type"):
+        leave_type = frappe.get_doc(
+			{
+				"doctype": "Leave Type",
+				"leave_type_name":"_Test Leave Type",
+				"include_holiday":1,
+				"allow_encashment":0,
+				"is_earned_leave":0,
+				"is_lwp":0,
+				"is_ppl": 0,
+				"is_carry_forward":0,
+				"expire_carry_forwarded_leaves_after_days": 0,
+				"encashment_threshold_days":5,
+				"earning_component": "Leave Encashment",
+			}
+		)
+        leave_type.insert()
+        frappe.db.commit()

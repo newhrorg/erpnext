@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 
+from dataclasses import fields
 from datetime import datetime, timedelta
 from typing import Dict, List
 
@@ -92,6 +93,12 @@ class ShiftAssignment(Document):
 			)
 			frappe.throw(msg, title=_("Overlapping Shifts"), exc=OverlappingShiftError)
 
+def check_same_days(a, b):
+    a_set = set(a)
+    b_set = set(b)
+    if len(a_set.intersection(b_set)) > 0:
+        return(True) 
+    return(False)  
 
 def has_overlapping_timings(shift_1: str, shift_2: str) -> bool:
 	"""
@@ -101,19 +108,29 @@ def has_overlapping_timings(shift_1: str, shift_2: str) -> bool:
 	overlapping_shift = frappe.db.get_value(
 		"Shift Type", shift_2, ["start_time", "end_time"], as_dict=True
 	)
-
+	list_shift1 = frappe.get_list("Days", filters=[['parent' , 'IN', shift_1]], fields=['day'])
+	list_shift2 = frappe.get_list("Days", filters=[['parent' , 'IN', shift_2]], fields=['day'])
+	days_shift1 =[]
+	days_shift2 =[]
+	for i,j in zip(list_shift1,list_shift2):
+		days_shift1.append(i.day)
+		days_shift2.append(j.day)
+	check_same_days(days_shift1, days_shift2)
 	if (
 		(
 			curr_shift.start_time > overlapping_shift.start_time
 			and curr_shift.start_time < overlapping_shift.end_time
+			and check_same_days(days_shift1, days_shift2)
 		)
 		or (
 			curr_shift.end_time > overlapping_shift.start_time
 			and curr_shift.end_time < overlapping_shift.end_time
+			and check_same_days(days_shift1, days_shift2)
 		)
 		or (
 			curr_shift.start_time <= overlapping_shift.start_time
 			and curr_shift.end_time >= overlapping_shift.end_time
+			and check_same_days(days_shift1, days_shift2)
 		)
 	):
 		return True
@@ -261,8 +278,18 @@ def get_shifts_for_date(employee: str, for_timestamp: datetime) -> List[Dict[str
 
 def get_shift_for_timestamp(employee: str, for_timestamp: datetime) -> Dict:
 	shifts = get_shifts_for_date(employee, for_timestamp)
-	if shifts:
-		return get_shift_for_time(shifts, for_timestamp)
+	shift_type_name = []
+	for shift in shifts:
+		shift_type_name.append(shift.shift_type)
+	list_shift = frappe.get_list("Days", filters=[['parent' , 'IN', shift_type_name], ['day' , '=', for_timestamp.strftime("%A")]], fields=['parent', 'day'])
+	shift_list = []
+	for shift in shifts:
+		for shift_doc in list_shift:
+			if shift.shift_type == shift_doc.parent:
+				shift_list.append(shift)
+				break
+	if shift_list:
+		return get_shift_for_time(shift_list, for_timestamp)
 	return {}
 
 
