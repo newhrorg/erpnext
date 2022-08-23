@@ -231,7 +231,7 @@ class TestShiftType(FrappeTestCase):
 		date = getdate()
 
 		doj = add_days(date, -30)
-		relieving_date = add_days(date, -5)
+		relieving_date = add_days(date, -6)
 		employee = make_employee(
 			"test_employee_dates@example.com",
 			company="_Test Company",
@@ -241,11 +241,9 @@ class TestShiftType(FrappeTestCase):
 		shift_type = setup_shift_type(
 			shift_type="Test Absent with no Attendance", process_attendance_after=add_days(doj, 2)
 		)
-
 		make_shift_assignment(shift_type.name, employee, add_days(date, -25))
 
 		shift_type.process_auto_attendance()
-
 		# should not mark absent before shift assignment/process attendance after date
 		attendance = frappe.db.get_value(
 			"Attendance", {"attendance_date": doj, "employee": employee}, "name"
@@ -346,6 +344,10 @@ def setup_shift_type(**args):
 			"allow_check_out_after_shift_end_time": 60,
 			"process_attendance_after": add_days(date, -2),
 			"last_sync_of_checkin": now_datetime() + timedelta(days=1),
+			"days":[
+				{"day":"Sunday"},
+				{"day":"Monday"},
+				{"day":"Tuesday"},],
 		}
 	)
 
