@@ -32,7 +32,8 @@ class TestMonthlyAttendanceSheet(FrappeTestCase):
 		now = now_datetime()
 		previous_month = now.month - 1
 		previous_month_first = now.replace(day=1).replace(month=previous_month).date()
-
+		self.employee = make_employee("test_employee@example.com", company="_Test Company")
+		
 		company = frappe.db.get_value("Employee", self.employee, "company")
 
 		# mark different attendance status on first 3 days of previous month
@@ -66,6 +67,7 @@ class TestMonthlyAttendanceSheet(FrappeTestCase):
 		now = now_datetime()
 		previous_month = now.month - 1
 		previous_month_first = now.replace(day=1).replace(month=previous_month).date()
+		self.employee = make_employee("test_employee@example.com", company="_Test Company")
 
 		company = frappe.db.get_value("Employee", self.employee, "company")
 
@@ -104,6 +106,7 @@ class TestMonthlyAttendanceSheet(FrappeTestCase):
 		now = now_datetime()
 		previous_month = now.month - 1
 		previous_month_first = now.replace(day=1).replace(month=previous_month).date()
+		self.employee = make_employee("test_employee@example.com", company="_Test Company")
 
 		company = frappe.db.get_value("Employee", self.employee, "company")
 
@@ -150,7 +153,8 @@ class TestMonthlyAttendanceSheet(FrappeTestCase):
 	@set_holiday_list("Salary Slip Test Holiday List", "_Test Company")
 	def test_attendance_with_group_by_filter(self):
 		from erpnext.hr.doctype.shift_type.test_shift_type import setup_shift_type
-		setup_shift_type(shift_type="Day Shift")
+		setup_shift_type()
+		self.employee = make_employee("test_employee@example.com", company="_Test Company")
 		now = now_datetime()
 		previous_month = now.month - 1
 		previous_month_first = now.replace(day=1).replace(month=previous_month).date()
@@ -191,6 +195,7 @@ class TestMonthlyAttendanceSheet(FrappeTestCase):
 		now = now_datetime()
 		previous_month = now.month - 1
 		previous_month_first = now.replace(day=1).replace(month=previous_month).date()
+		self.employee = make_employee("test_employee@example.com", company="_Test Company")
 
 		company = frappe.db.get_value("Employee", self.employee, "company")
 

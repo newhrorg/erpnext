@@ -139,11 +139,13 @@ class TestEmployeeCheckin(FrappeTestCase):
 		timestamp = datetime.combine(date, get_time("08:45:00"))
 		log = make_checkin(employee, timestamp)
 		self.assertEqual(log.shift, shift_type.name)
-
+		
+			
 		# "begin checkin before shift time" = 60 mins, so should work for 7:00:00
 		timestamp = datetime.combine(date, get_time("07:00:00"))
 		log = make_checkin(employee, timestamp)
 		self.assertEqual(log.shift, shift_type.name)
+
 
 		# "allow checkout after shift end time" = 60 mins, so should work for 13:00:00
 		timestamp = datetime.combine(date, get_time("13:00:00"))
@@ -165,8 +167,8 @@ class TestEmployeeCheckin(FrappeTestCase):
 
 		timestamp = datetime.combine(date, get_time("08:45:00"))
 		log = make_checkin(employee, timestamp)
-
 		self.assertEqual(log.shift, shift_type.name)
+		
 		self.assertEqual(log.shift_start, datetime.combine(date, get_time("08:00:00")))
 		self.assertEqual(log.shift_end, datetime.combine(date, get_time("12:00:00")))
 		self.assertEqual(log.shift_actual_start, datetime.combine(date, get_time("07:00:00")))
@@ -192,6 +194,7 @@ class TestEmployeeCheckin(FrappeTestCase):
 		shift_type = setup_shift_type(
 			shift_type="Midnight Shift", start_time="23:00:00", end_time="01:00:00"
 		)
+
 		date = getdate()
 		next_day = add_days(date, 1)
 		make_shift_assignment(shift_type.name, employee, date)
@@ -199,8 +202,8 @@ class TestEmployeeCheckin(FrappeTestCase):
 		# log falls in the first day
 		timestamp = datetime.combine(date, get_time("23:00:00"))
 		log = make_checkin(employee, timestamp)
-
 		self.assertEqual(log.shift, shift_type.name)
+	
 		self.assertEqual(log.shift_start, datetime.combine(date, get_time("23:00:00")))
 		self.assertEqual(log.shift_end, datetime.combine(next_day, get_time("01:00:00")))
 		self.assertEqual(log.shift_actual_start, datetime.combine(date, get_time("22:00:00")))
@@ -271,7 +274,7 @@ class TestEmployeeCheckin(FrappeTestCase):
 		self.assertEqual(log.shift, shift2.name)
 		self.assertEqual(log.shift_start, datetime.combine(date, get_time("12:30:00")))
 		self.assertEqual(log.shift_actual_start, datetime.combine(date, get_time("12:00:00")))
-
+	
 		# log at 12:00 should set shift1 and actual end as 12 and not 1 since the next shift's grace starts
 		timestamp = datetime.combine(date, get_time("12:00:00"))
 		log = make_checkin(employee, timestamp)
@@ -283,7 +286,7 @@ class TestEmployeeCheckin(FrappeTestCase):
 		timestamp = datetime.combine(date, get_time("12:01:00"))
 		log = make_checkin(employee, timestamp)
 		self.assertEqual(log.shift, shift2.name)
-
+	
 
 def make_n_checkins(employee, n, hours_to_reverse=1):
 	logs = [make_checkin(employee, now_datetime() - timedelta(hours=hours_to_reverse, minutes=n + 1))]
