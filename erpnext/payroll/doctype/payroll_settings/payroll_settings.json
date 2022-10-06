@@ -16,7 +16,8 @@
   "email_salary_slip_to_employee",
   "encrypt_salary_slips_in_emails",
   "show_leave_balances_in_salary_slip",
-  "password_policy"
+  "password_policy",
+  "number_of_holiday_shift"
  ],
  "fields": [
   {
@@ -91,13 +92,19 @@
    "fieldname": "show_leave_balances_in_salary_slip",
    "fieldtype": "Check",
    "label": "Show Leave Balances in Salary Slip"
+  },
+  {
+   "default": "0",
+   "fieldname": "number_of_holiday_shift",
+   "fieldtype": "Int",
+   "label": "Number OF Holiday Shift"
   }
  ],
  "icon": "fa fa-cog",
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2021-03-03 17:49:59.579723",
+ "modified": "2022-10-06 12:46:19.199227",
  "modified_by": "Administrator",
  "module": "Payroll",
  "name": "Payroll Settings",

@@ -315,7 +315,57 @@ class SalarySlip(TransactionBase):
 			"Payroll Settings", "include_holidays_in_total_working_days"
 		)
 
-		working_days = date_diff(self.end_date, self.start_date) + 1
+		employee_shifts = frappe.get_list("Shift Assignment",filters={'employee': self.employee})
+		shift_days = []
+		import collections
+		diff_days = []
+		from collections import Counter
+		if len(employee_shifts) > 1:
+			for i in employee_shifts:
+				shift_assignemnt =frappe.get_doc("Shift Assignment",i.name)
+				shift_type = frappe.get_doc("Shift Type", shift_assignemnt.shift_type)
+				days = shift_type.days
+				for i in days:
+					shift_days.append(i.day)
+		diff_list = Counter(shift_days)
+		diff_days = [k for k,v in diff_list.items() if v == 1 ]
+		count_same_days = [item for item, count in collections.Counter(shift_days).items() if count > 1]
+		count_same = 0
+		count_diff = 0
+		set_shift = set()
+		shift_same = 0
+		shift_diff = 0
+		for i in diff_list:
+			set_shift.add(diff_list[i])
+		for j in set_shift:
+			if j == 1:
+				shift_diff = j
+			else:
+				shift_same = j
+
+		import datetime, calendar
+		currentDate = datetime.date.today()
+		daysInMonth= calendar.monthrange(currentDate.year, currentDate.month)[1]
+		days = []
+		for i in range(1, daysInMonth+1):
+			day = datetime.datetime(currentDate.year, currentDate.month, i)
+			days.append(calendar.day_name[day.weekday()])
+		
+		for x,y in zip(count_same_days,diff_days):
+			count_same += days.count(x)
+			count_diff += days.count(y)
+
+		work_shifts = ((count_same*shift_same) + (count_diff * shift_diff))
+		holidays = self.get_holidays_for_employee(self.start_date, self.end_date)
+		number_of_holiday_shift = frappe.db.get_single_value(
+			"Payroll Settings", "number_of_holiday_shift"
+		)
+		if cint(include_holidays_in_total_working_days):
+			work_shifts += (len(holidays) * number_of_holiday_shift)
+
+
+		# working_days = date_diff(self.end_date, self.start_date) + 1
+		working_days = work_shifts
 		if for_preview:
 			self.total_working_days = working_days
 			self.payment_days = working_days
@@ -324,7 +374,7 @@ class SalarySlip(TransactionBase):
 		holidays = self.get_holidays_for_employee(self.start_date, self.end_date)
 
 		if not cint(include_holidays_in_total_working_days):
-			working_days -= len(holidays)
+			# working_days -= len(holidays)
 			if working_days < 0:
 				frappe.throw(_("There are more holidays than working days this month."))
 
@@ -347,15 +397,23 @@ class SalarySlip(TransactionBase):
 		self.leave_without_pay = lwp
 		self.total_working_days = working_days
 
+
 		payment_days = self.get_payment_days(
 			joining_date, relieving_date, include_holidays_in_total_working_days
 		)
 
 		if flt(payment_days) > flt(lwp):
+			holidays = self.get_holidays_for_employee(self.start_date, self.end_date)
+			payroll_settings = frappe.get_doc("Payroll Settings")
+			attendance_days = frappe.get_list("Attendance",filters={"attendance_date": ["between",  (self.start_date, self.end_date)],"Employee":self.employee})
 			self.payment_days = flt(payment_days) - flt(lwp)
 
 			if payroll_based_on == "Attendance":
-				self.payment_days -= flt(absent)
+				# self.payment_days -= flt(absent)
+				if payroll_settings.include_holidays_in_total_working_days:
+					self.payment_days = len(attendance_days) + (len(holidays)* payroll_settings.number_of_holiday_shift)
+				else:
+					self.payment_days = len(attendance_days)
 
 			consider_unmarked_attendance_as = (
 				frappe.db.get_value("Payroll Settings", None, "consider_unmarked_attendance_as") or "Present"
@@ -364,7 +422,11 @@ class SalarySlip(TransactionBase):
 			if payroll_based_on == "Attendance" and consider_unmarked_attendance_as == "Absent":
 				unmarked_days = self.get_unmarked_days(include_holidays_in_total_working_days)
 				self.absent_days += unmarked_days  # will be treated as absent
-				self.payment_days -= unmarked_days
+				if payroll_settings.include_holidays_in_total_working_days:
+					self.payment_days = len(attendance_days) + (len(holidays)* payroll_settings.number_of_holiday_shift)
+				else:
+					self.payment_days = len(attendance_days)
+				# self.payment_days -= unmarked_days
 		else:
 			self.payment_days = 0
 
