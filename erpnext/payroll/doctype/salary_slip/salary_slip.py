@@ -405,8 +405,9 @@ class SalarySlip(TransactionBase):
 		if flt(payment_days) > flt(lwp):
 			holidays = self.get_holidays_for_employee(self.start_date, self.end_date)
 			payroll_settings = frappe.get_doc("Payroll Settings")
-			attendance_days = frappe.get_list("Attendance",filters={"attendance_date": ["between",  (self.start_date, self.end_date)],"Employee":self.employee})
-			self.payment_days = flt(payment_days) - flt(lwp)
+			attendance_days = frappe.get_list("Attendance",filters={"attendance_date": ["between",  (self.start_date, self.end_date)],"employee":self.employee, "status":"Present"})
+			self.payment_days = len(attendance_days) - flt(lwp)
+
 
 			if payroll_based_on == "Attendance":
 				# self.payment_days -= flt(absent)
