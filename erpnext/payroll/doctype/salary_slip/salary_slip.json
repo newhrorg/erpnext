@@ -241,7 +241,7 @@
   {
    "fieldname": "total_working_days",
    "fieldtype": "Float",
-   "label": "Working Days",
+   "label": "Working Shifts",
    "oldfieldname": "total_days_in_month",
    "oldfieldtype": "Int",
    "read_only": 1,
@@ -257,7 +257,7 @@
   {
    "fieldname": "payment_days",
    "fieldtype": "Float",
-   "label": "Payment Days",
+   "label": "Payment Shifts",
    "oldfieldname": "payment_days",
    "oldfieldtype": "Float",
    "read_only": 1,
@@ -479,7 +479,7 @@
   {
    "fieldname": "absent_days",
    "fieldtype": "Float",
-   "label": "Absent Days",
+   "label": "Absent Shifts",
    "read_only": 1
   },
   {
@@ -646,7 +646,7 @@
  "idx": 9,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-08-29 08:59:50.819986",
+ "modified": "2022-10-06 17:06:42.980012",
  "modified_by": "Administrator",
  "module": "Payroll",
  "name": "Salary Slip",
