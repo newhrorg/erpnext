@@ -454,6 +454,7 @@ class SalarySlip(TransactionBase):
 					else:
 						self.payment_days = working_days - len(absent_days)
 						self.absent_days = len(absent_days)
+
 				# self.payment_days -= unmarked_days
 		else:
 			self.payment_days = 0
