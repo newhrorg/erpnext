@@ -95,7 +95,10 @@ class TestSalarySlip(FrappeTestCase):
 
 		self.assertEqual(ss.leave_without_pay, 1.25)
 		self.assertEqual(ss.absent_days, 1)
-
+		print(ss.leave_without_pay)
+		print(ss.absent_days)
+		print(ss.payment_days)
+		print(ss.total_working_days)
 		days_in_month = no_of_days[0]
 		no_of_holidays = no_of_days[1]
 

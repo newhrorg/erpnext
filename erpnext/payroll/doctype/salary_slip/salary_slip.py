@@ -76,8 +76,18 @@ class SalarySlip(TransactionBase):
 		if not (len(self.get("earnings")) or len(self.get("deductions"))):
 			# get details from salary structure
 			self.get_emp_and_working_day_details()
+			# print("++++++++++++++++++")
+			# print("get_emp_and_working_day_details")
+			# print(self.total_working_days)
+			# print(self.payment_days)
+			# print("++++++++++++++++++")
 		else:
 			self.get_working_days_details(lwp=self.leave_without_pay)
+			# print("*********************")
+			# print("get_working_days_details")
+			# print(self.total_working_days)
+			# print(self.payment_days)
+			# print("*********************")
 
 		self.calculate_net_pay()
 		self.compute_year_to_date()
@@ -363,9 +373,10 @@ class SalarySlip(TransactionBase):
 		if cint(include_holidays_in_total_working_days):
 			work_shifts += (len(holidays) * number_of_holiday_shift)
 
-
-		# working_days = date_diff(self.end_date, self.start_date) + 1
-		working_days = work_shifts
+		if len(employee_shifts) > 0:
+			working_days = work_shifts
+		else:
+			working_days = date_diff(self.end_date, self.start_date) + 1
 		if for_preview:
 			self.total_working_days = working_days
 			self.payment_days = working_days
@@ -405,16 +416,26 @@ class SalarySlip(TransactionBase):
 		if flt(payment_days) > flt(lwp):
 			holidays = self.get_holidays_for_employee(self.start_date, self.end_date)
 			payroll_settings = frappe.get_doc("Payroll Settings")
-			attendance_days = frappe.get_list("Attendance",filters={"attendance_date": ["between",  (self.start_date, self.end_date)],"employee":self.employee, "status":"Present"})
-			self.payment_days = len(attendance_days) - flt(lwp)
+			attendance_days = frappe.get_list("Attendance",filters={"attendance_date": ["between",  (self.start_date, self.end_date)],"employee":self.employee, "status":('in',('Present','Absent'))},fields=['status'])
+			absent_days= []
+			present_days= []
+			for i in attendance_days:
+				if i.status == 'Present':
+					present_days.append(i.name)
+				else:
+					absent_days.append(i.name)
+			if len(employee_shifts) > 0:
+				self.payment_days = len(present_days) - flt(lwp)
+			else:
+				self.payment_days = flt(payment_days) - flt(lwp)
 
 
 			if payroll_based_on == "Attendance":
 				# self.payment_days -= flt(absent)
 				if payroll_settings.include_holidays_in_total_working_days:
-					self.payment_days = len(attendance_days) + (len(holidays)* payroll_settings.number_of_holiday_shift)
+					self.payment_days = len(present_days) + (len(holidays)* payroll_settings.number_of_holiday_shift)
 				else:
-					self.payment_days = len(attendance_days)
+					self.payment_days = len(present_days)
 
 			consider_unmarked_attendance_as = (
 				frappe.db.get_value("Payroll Settings", None, "consider_unmarked_attendance_as") or "Present"
@@ -422,11 +443,17 @@ class SalarySlip(TransactionBase):
 
 			if payroll_based_on == "Attendance" and consider_unmarked_attendance_as == "Absent":
 				unmarked_days = self.get_unmarked_days(include_holidays_in_total_working_days)
-				self.absent_days += unmarked_days  # will be treated as absent
-				if payroll_settings.include_holidays_in_total_working_days:
-					self.payment_days = len(attendance_days) + (len(holidays)* payroll_settings.number_of_holiday_shift)
+				if len(employee_shifts) > 0:
+					self.absent_days += unmarked_days
+					self.payment_days -= unmarked_days
 				else:
-					self.payment_days = len(attendance_days)
+				# self.absent_days += unmarked_days  # will be treated as absent
+					if payroll_settings.include_holidays_in_total_working_days:
+						self.absent_days = len(absent_days) + (len(holidays)* payroll_settings.number_of_holiday_shift)  # will be treated as absent
+						self.payment_days = (working_days - len(absent_days)) + (len(holidays)* payroll_settings.number_of_holiday_shift)
+					else:
+						self.payment_days = working_days - len(absent_days)
+						self.absent_days = len(absent_days)
 				# self.payment_days -= unmarked_days
 		else:
 			self.payment_days = 0
@@ -1514,7 +1541,7 @@ class SalarySlip(TransactionBase):
 				"loan_account",
 				"loan_type",
 				"is_term_loan",
-				"manually_update_paid_amount_in_salary_slip",
+				# "manually_update_paid_amount_in_salary_slip",
 			],
 			filters={
 				"applicant": self.employee,
